@@ -24,29 +24,31 @@ public class PlacementController : MonoBehaviour
     {
         spawnButton.onClick.AddListener(() =>
         {
-            Instantiate(planetPrefab, placeIndicator.transform.position, placeIndicator.transform.rotation);
+            if (ModeManager.Instance.CurrentMode == ModeManager.Mode.Place)
+                Instantiate(planetPrefab, placeIndicator.transform.position, placeIndicator.transform.rotation);
         });
     }
 
     private void Update()
     {
-        if (!Application.isMobilePlatform) return;
-        
-        var screenCenter = Camera.current.ViewportToScreenPoint(new Vector3(0.5f, 0.5f));
-        var hits = new List<ARRaycastHit>();
-
-        if (_arRaycastManager.Raycast(screenCenter, hits, TrackableType.Planes))
+        var showIndicator = false;
+        if (Application.isMobilePlatform && ModeManager.Instance.CurrentMode == ModeManager.Mode.Place)
         {
-            if (hits.Count > 0)
+
+            var screenCenter = Camera.current.ViewportToScreenPoint(new Vector3(0.5f, 0.5f));
+            var hits = new List<ARRaycastHit>();
+
+            if (_arRaycastManager.Raycast(screenCenter, hits, TrackableType.Planes))
             {
-                var hitPose = hits[0].pose;
-                placeIndicator.SetActive(true);
-                placeIndicator.transform.SetPositionAndRotation(hitPose.position, hitPose.rotation);
-            }
-            else
-            {
-                placeIndicator.SetActive(false);
+                if (hits.Count > 0)
+                {
+                    var hitPose = hits[0].pose;
+                    showIndicator = true;
+                    placeIndicator.transform.SetPositionAndRotation(hitPose.position, hitPose.rotation);
+                }
             }
         }
+
+        placeIndicator.SetActive(showIndicator);
     }
 }

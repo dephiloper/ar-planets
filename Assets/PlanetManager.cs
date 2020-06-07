@@ -7,13 +7,13 @@ using UnityEngine.UI;
 public class PlanetManager : MonoBehaviour
 {
     private const float Gravity = 0.001f;
-   
+    public static PlanetManager Instance { get; private set; }
+
     [SerializeField] private bool isDebug;
-    [SerializeField] private Button spawnButton;
-    [SerializeField] private Button startButton;
+    [SerializeField] private Button primaryActionButton;
+    [SerializeField] private Button modeButton;
     [SerializeField] [Range(50, 3000)] private int range;
 
-    public static PlanetManager Instance { get; private set; }
     private readonly List<Planet> _planets = new List<Planet>();
 
     private int _prevRange;
@@ -40,11 +40,12 @@ public class PlanetManager : MonoBehaviour
     {
         if (isDebug) return;
 
-        startButton.onClick.AddListener(() =>
+        primaryActionButton.onClick.AddListener(() =>
         {
+            if (ModeManager.Instance.CurrentMode != ModeManager.Mode.Simulate) return;
+            
             _isSimulating = !_isSimulating;
-            spawnButton.interactable = _isSimulating;
-            startButton.GetComponentInChildren<Text>().text = _isSimulating ? "Start" : "Stop";
+            modeButton.interactable = _isSimulating;
         });
     }
 
@@ -83,7 +84,7 @@ public class PlanetManager : MonoBehaviour
 
             if (!isDebug)
             {
-                startButton.interactable = _planets.All(p => p.isSetup);
+                primaryActionButton.interactable = _planets.All(p => p.IsSetup);
             }
         }
         else
@@ -107,10 +108,10 @@ public class PlanetManager : MonoBehaviour
     {
         var firstUpdate = _points == null;
         var forceUpdate = _forceUpdateTrajectory;
-        var planetsUpdated = _planets.Any(p => p.hasChanged);
+        var planetsUpdated = _planets.Any(p => p.HasChanged);
         
         // reset everything
-        _planets.ForEach(p => p.hasChanged = false);
+        _planets.ForEach(p => p.HasChanged = false);
         _forceUpdateTrajectory = false;
         return firstUpdate || planetsUpdated || forceUpdate;
     }
@@ -172,5 +173,11 @@ public class PlanetManager : MonoBehaviour
         }
 
         return force;
+    }
+
+    public void DeselectAllPlanets()
+    {
+        foreach (var p in _planets)
+            p.IsSelected = false;
     }
 }
