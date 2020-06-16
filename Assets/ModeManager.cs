@@ -7,6 +7,7 @@ using UnityEngine.UI;
 public class ModeManager : MonoBehaviour
 {
     [SerializeField] private Image primaryActionImage;
+    [SerializeField] private Button primaryActionButton;
     [SerializeField] private Button secondaryActionButton;
     [SerializeField] private Button modeButton;
     [SerializeField] private Image modeImage;
@@ -56,5 +57,12 @@ public class ModeManager : MonoBehaviour
     public void ChangeGrabImage(bool isGrabbing)
     {
         primaryActionImage.sprite = primarySprites[isGrabbing ? 3 : 1];
+    }
+
+    public void ShowButtons(bool show)
+    {
+        primaryActionButton.gameObject.SetActive(show);
+        secondaryActionButton.gameObject.SetActive(show);
+        modeButton.gameObject.SetActive(show);
     }
 }

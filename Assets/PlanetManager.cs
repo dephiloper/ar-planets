@@ -6,17 +6,17 @@ using UnityEngine.UI;
 
 public class PlanetManager : MonoBehaviour
 {
-    private const float Gravity = 0.001f;
+    public float gravity = 0.001f;
     public static PlanetManager Instance { get; private set; }
 
     [SerializeField] private bool isDebug;
     [SerializeField] private Button primaryActionButton;
-    [SerializeField] private Button modeButton;
     [SerializeField] [Range(50, 3000)] private int range;
 
     private readonly List<Planet> _planets = new List<Planet>();
 
     private int _prevRange;
+    private float _prevGravity;
     private bool _forceUpdateTrajectory;
     private int _index;
     private List<Vector3>[] _points;
@@ -45,7 +45,6 @@ public class PlanetManager : MonoBehaviour
             if (ModeManager.Instance.CurrentMode != ModeManager.Mode.Simulate) return;
             
             _isSimulating = !_isSimulating;
-            modeButton.interactable = _isSimulating;
         });
     }
 
@@ -65,6 +64,12 @@ public class PlanetManager : MonoBehaviour
         {
             _forceUpdateTrajectory = true;
             _prevRange = range;
+        }
+        
+        if (Math.Abs(_prevGravity - gravity) > 0.000001f)
+        {
+            _forceUpdateTrajectory = true;
+            _prevGravity = gravity;
         }
     }
 
@@ -161,7 +166,7 @@ public class PlanetManager : MonoBehaviour
     {
         var pos = positions[pIndex];
         var force = Vector3.zero;
-        var mass = _planets[pIndex].mass;
+        var mass = _planets[pIndex].Mass;
 
         for (var i = 0; i < _planets.Count; i++)
         {
@@ -169,7 +174,7 @@ public class PlanetManager : MonoBehaviour
             var otherPos = positions[i];
             var distSqr = Vector3.SqrMagnitude(pos - otherPos);
             var dir = (otherPos - pos).normalized;
-            force += dir * (Gravity * (mass * _planets[i].mass / distSqr));
+            force += dir * (gravity * (mass * _planets[i].Mass / distSqr));
         }
 
         return force;
