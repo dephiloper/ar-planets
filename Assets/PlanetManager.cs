@@ -12,6 +12,7 @@ public class PlanetManager : MonoBehaviour
     [SerializeField] private bool isDebug;
     [SerializeField] private Button primaryActionButton;
     [SerializeField] [Range(50, 3000)] private int range;
+    [SerializeField] private GameObject collisionPrefab;
 
     private readonly List<Planet> _planets = new List<Planet>();
 
@@ -20,9 +21,10 @@ public class PlanetManager : MonoBehaviour
     private bool _forceUpdateTrajectory;
     private int _index;
     private List<Vector3>[] _points;
+    private bool[] _collidedPlanets;
     private Vector3[] _velocities;
     private bool _isSimulating;
-    
+    private readonly List<GameObject> _collisionSpheres = new List<GameObject>();
 
     private void Awake()
     {
@@ -51,6 +53,8 @@ public class PlanetManager : MonoBehaviour
     public void RegisterPlanet(Planet planet)
     {
         _planets.Add(planet);
+        var sphere = Instantiate(collisionPrefab, Vector3.zero, Quaternion.identity);
+        _collisionSpheres.Add(sphere);
     }
 
     private void Update()
@@ -96,13 +100,26 @@ public class PlanetManager : MonoBehaviour
         {
             for (var pIndex = 0; pIndex < _planets.Count; pIndex++)
             {
+                if (_planets[pIndex].HasCollided) continue;
+                
+                _collisionSpheres[pIndex].gameObject.SetActive(false);
+                
                 _planets[pIndex].transform.position = _points[pIndex][_index];
-
+                
                 var latestPositions = FindCurrentPlanetPositions();
                 var force = CalculateGravitationalForce(latestPositions, pIndex);
 
                 _velocities[pIndex] += force;
                 _points[pIndex].Add(_points[pIndex].Last() + _velocities[pIndex] * Time.fixedDeltaTime);
+
+                var x = _planets.Select(p => p.HasCollided).ToArray();
+                var collidingPlanet = CheckForCollision(_index, pIndex, x);
+                
+                if (collidingPlanet != -1)
+                {
+                    _planets[pIndex].HasCollided = true;
+                    _planets[collidingPlanet].HasCollided = true;
+                }
             }
 
             _index++;
@@ -130,17 +147,41 @@ public class PlanetManager : MonoBehaviour
         {
             _velocities[i] = _planets[i].initialVelocity;
             _points[i] = new List<Vector3> {_planets[i].transform.position};
+            _collisionSpheres[i].SetActive(false);
         }
 
+        var collidedPlanets = new bool[_planets.Count];
+        
         for (var i = 0; i < range; i++)
         {
             for (var pIndex = 0; pIndex < _planets.Count; pIndex++)
             {
+                // if planet has already been collided with another stop calculating further trajectory
+                if (collidedPlanets[pIndex])
+                    continue;
+                
                 var latestPositions = FindCurrentPlanetPositions();
                 var force = CalculateGravitationalForce(latestPositions, pIndex);
 
                 _velocities[pIndex] += force;
-                _points[pIndex].Add(_points[pIndex].Last() + _velocities[pIndex] * Time.fixedDeltaTime);
+                var newPosition = _points[pIndex].Last() + _velocities[pIndex] * Time.fixedDeltaTime;
+                _points[pIndex].Add(newPosition);
+
+                var collidingPlanet = CheckForCollision(i, pIndex, collidedPlanets);
+                
+                // if collision appeared 
+                if (collidingPlanet != -1)
+                {
+                    collidedPlanets[pIndex] = true;
+                    _collisionSpheres[pIndex].SetActive(true);
+                    _collisionSpheres[pIndex].transform.localScale = Vector3.one * (_planets[pIndex].radius * 0.2f);                    
+                    _collisionSpheres[pIndex].transform.position = _points[pIndex][i];
+
+                    collidedPlanets[collidingPlanet] = true;
+                    _collisionSpheres[collidingPlanet].SetActive(true);
+                    _collisionSpheres[collidingPlanet].transform.localScale = Vector3.one * (_planets[collidingPlanet].radius * 0.2f);
+                    _collisionSpheres[collidingPlanet].transform.position = _points[collidingPlanet][i];
+                }
             }
         }
 
@@ -151,6 +192,24 @@ public class PlanetManager : MonoBehaviour
             lineRenderer.positionCount = _points[i].Count;
             lineRenderer.SetPositions(_points[i].ToArray());
         }
+    }
+
+    private int CheckForCollision(int currentIndex, int pIndex, IReadOnlyList<bool> collidedPlanets)
+    {
+        for (var i = 0; i < _planets.Count; i++)
+        {
+            // check collision only with other planets
+            // and see if the other planet has not been collided with before
+            if (i == pIndex || collidedPlanets[i]) continue;
+
+            var pos = _points[pIndex][currentIndex];
+            var otherPos = _points[i][currentIndex];
+
+            if (Vector3.Distance(pos, otherPos) < _planets[pIndex].radius * 0.1 + _planets[i].radius * 0.1)
+                return i;
+        }
+
+        return -1;
     }
 
     private Vector3[] FindCurrentPlanetPositions()
@@ -170,7 +229,7 @@ public class PlanetManager : MonoBehaviour
 
         for (var i = 0; i < _planets.Count; i++)
         {
-            if (pIndex == i) continue;
+            if (pIndex == i || _planets[i].HasCollided) continue;
             var otherPos = positions[i];
             var distSqr = Vector3.SqrMagnitude(pos - otherPos);
             var dir = (otherPos - pos).normalized;

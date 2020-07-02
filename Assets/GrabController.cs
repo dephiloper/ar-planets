@@ -41,9 +41,12 @@ public class GrabController : MonoBehaviour
         var ray = Camera.current.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
         if (Physics.Raycast(ray, out var hit))
         {
-            var planet = hit.transform.GetComponent<Planet>();
-            planet.IsSelected = true;
-            _selectedPlanet = planet.gameObject;
+            var planet = hit.transform.parent.GetComponent<Planet>();
+            if (planet != null)
+            {
+                planet.IsSelected = true;
+                _selectedPlanet = planet.gameObject;
+            }
         }
         else
         {

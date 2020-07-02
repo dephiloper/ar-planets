@@ -22,6 +22,8 @@ public class Planet : MonoBehaviour
     public bool IsSetup { get; private set; }
     public bool IsSelected { get; set; }
 
+    public bool HasCollided { get; set; }
+    
     private const float InitialHeight = 0.001f;
     private Vector3 _prevPosition;
     private float _prevMass;
@@ -37,8 +39,10 @@ public class Planet : MonoBehaviour
     private void Start()
     {
         PlanetManager.Instance.RegisterPlanet(this);
-        initialVelocity.z = Random.Range(-0.2f, 0.2f);
+        if (initialVelocity == Vector3.zero)
+            initialVelocity.z = Random.Range(-0.2f, 0.2f);
         _meshRenderer = GetComponentInChildren<MeshRenderer>();
+        color = Random.ColorHSV(0f, 1f, 1f, 1f, 0.5f, 1f);
     }
 
     private void Update()
@@ -50,12 +54,14 @@ public class Planet : MonoBehaviour
         {
             _meshRenderer.material = selectedMaterial;
             _meshRenderer.material.SetColor(MainColor, color);
+            GetComponent<LineRenderer>().material.color = color;
             _colorChanged = false;
         }
         else if (_colorChanged && !IsSelected)
         {
             _meshRenderer.material = defaultMaterial;
             _meshRenderer.material.SetColor(Albedo, color);
+            GetComponent<LineRenderer>().material.color = color;
             _colorChanged = false;
         }
     }
@@ -114,10 +120,5 @@ public class Planet : MonoBehaviour
             t.position = newPosition;
             IsSetup = true;
         }
-    }
-
-    public void ShowOuterSphere(bool show)
-    {
-        outerSphere.SetActive(show);
     }
 }
