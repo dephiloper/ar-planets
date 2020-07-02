@@ -2,21 +2,25 @@
 using UnityEngine;
 using Random = UnityEngine.Random;
 
+/// <summary>
+/// @author Philipp Bönsch
+/// manages planet behaviour in the simulation
+/// </summary>
 public class Planet : MonoBehaviour
 {
-    public GameObject outerSphere;
-    
-    public float Mass => 4.0f / 3.0f * 3.14159f * radius * massCoefficient;
+    private const float MassCoefficient = 1.0f;
+    public const float ScaleCoefficient = 0.2f;
+    public float Mass => 4.0f / 3.0f * 3.14159f * Mathf.Pow(radius, 3) * MassCoefficient;
 
+
+    public GameObject outerSphere;
     public float radius;
     public Color color;
     public Vector3 initialVelocity;
 
-    [SerializeField] private Material selectedMaterial;
-    [SerializeField] private Material defaultMaterial;
     [SerializeField] private Transform sphere;
-    [SerializeField] private float massCoefficient = 0.2f;
-    [SerializeField] private float scaleCoefficient = 0.2f;
+    [SerializeField] private Material defaultMaterial;
+    [SerializeField] private Material highlightMaterial;
 
     public bool HasChanged { set; get; }
     public bool IsSetup { get; private set; }
@@ -33,7 +37,7 @@ public class Planet : MonoBehaviour
     private bool _prevSelected;
     private MeshRenderer _meshRenderer;
     private bool _colorChanged;
-    private static readonly int MainColor = Shader.PropertyToID("_MainColor");
+    private static readonly int MainColor = Shader.PropertyToID("MainColor");
     private static readonly int Albedo = Shader.PropertyToID("_Color");
 
     private void Start()
@@ -52,8 +56,9 @@ public class Planet : MonoBehaviour
 
         if (_colorChanged && IsSelected)
         {
-            _meshRenderer.material = selectedMaterial;
+            _meshRenderer.material = highlightMaterial;
             _meshRenderer.material.SetColor(MainColor, color);
+            _meshRenderer.material.SetColor(Albedo, color);
             GetComponent<LineRenderer>().material.color = color;
             _colorChanged = false;
         }
@@ -90,7 +95,7 @@ public class Planet : MonoBehaviour
         {
             HasChanged = true;
             _prevRadius = radius;
-            sphere.localScale = new Vector3(radius, radius, radius) * scaleCoefficient;
+            sphere.localScale = new Vector3(radius, radius, radius) * ScaleCoefficient;
         }
 
         if (_prevColor != color)

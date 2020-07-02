@@ -3374,7 +3374,7 @@ PrefabInstance:
       objectReference: {fileID: 854905464}
     - target: {fileID: 3549496144319483678, guid: 36117d1a8d01559c28f62af7fb8194ef, type: 3}
       propertyPath: range
-      value: 1000
+      value: 5000
       objectReference: {fileID: 0}
     - target: {fileID: 3549496144319483678, guid: 36117d1a8d01559c28f62af7fb8194ef, type: 3}
       propertyPath: primaryActionButton
@@ -3383,7 +3383,7 @@ PrefabInstance:
     - target: {fileID: 3549496144319483678, guid: 36117d1a8d01559c28f62af7fb8194ef, type: 3}
       propertyPath: modeButton
       value: 
-      objectReference: {fileID: 854905464}
+      objectReference: {fileID: 1723755391}
     - target: {fileID: 3549496144319483678, guid: 36117d1a8d01559c28f62af7fb8194ef, type: 3}
       propertyPath: collisionPrefab
       value: 

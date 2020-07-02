@@ -1,9 +1,10 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.UI;
 
+/// <summary>
+/// @author Philipp Bönsch
+/// manages the ui modes for placement, editing and simulation
+/// </summary>
 public class ModeManager : MonoBehaviour
 {
     [SerializeField] private Image primaryActionImage;

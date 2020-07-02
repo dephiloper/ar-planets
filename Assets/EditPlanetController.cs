@@ -1,6 +1,10 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
 
+/// <summary>
+/// @author Philipp Bönsch
+/// controls the editing of a planet
+/// </summary>
 public class EditPlanetController : MonoBehaviour
 {
     public Planet SelectedPlanet { get; set; }
@@ -17,7 +21,6 @@ public class EditPlanetController : MonoBehaviour
 
     [SerializeField] private Slider radiusSlider;
     [SerializeField] private Text radiusVal;
-    [SerializeField] private Text temp;
 
     private Color _prevColor;
     private float _prevRadius;
@@ -27,12 +30,10 @@ public class EditPlanetController : MonoBehaviour
     private CircleCollider2D _colorWheelCollider;
     private RectTransform _colorWheelTransform;
 
-    private LineRenderer _initVelLineRenderer;
     private bool _setVelocityMode;
 
     private void Start()
     {
-        _initVelLineRenderer = SelectedPlanet.outerSphere.GetComponent<LineRenderer>();
         _prevColor = SelectedPlanet.color;
         _prevRadius = SelectedPlanet.radius;
         _prevVel = SelectedPlanet.initialVelocity;
@@ -44,6 +45,7 @@ public class EditPlanetController : MonoBehaviour
         _colorWheelCollider = colorWheel.GetComponent<CircleCollider2D>();
         _colorWheelTransform = colorWheel.GetComponent<RectTransform>();
 
+        // initialization of all buttons in the edit pane
         initVelButton.onClick.AddListener(() =>
         {
             editPane.SetActive(false);
@@ -94,32 +96,25 @@ public class EditPlanetController : MonoBehaviour
                 SelectedPlanet.initialVelocity = _prevVel;
                 velEditDoneButton.OnSubmit(null);
             }
-            
-            var ray = Camera.current.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
-            _initVelLineRenderer.positionCount = 0;
-            _initVelLineRenderer.SetPositions(new Vector3[0]);
 
-            if (Physics.Raycast(ray, out var hit))
-            {
-                if (hit.collider.CompareTag("OuterSphere"))
-                {
-                    _initVelLineRenderer.positionCount = 2;
-                    _initVelLineRenderer.SetPositions(new[] {SelectedPlanet.outerSphere.transform.position, hit.point});
-                    SelectedPlanet.initialVelocity = (hit.point - SelectedPlanet.transform.position).normalized * 0.2f;
-                }
-            }
+            // setting the initial velocity/direction by shooting a ray from the camera center
+            // to the outer sphere of the selected planet
+            var ray = Camera.current.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
+            ray = new Ray(ray.origin + ray.direction * 1000f, -ray.direction);
+
+            if (Physics.Raycast(ray, out var hit, 1000f) && hit.collider.gameObject.CompareTag("OuterSphere"))
+                SelectedPlanet.initialVelocity = (hit.point - SelectedPlanet.transform.position).normalized * 0.1f;
         }
         else
         {
             if (Input.GetKey(KeyCode.Escape))
-            {
                 closeButton.OnSubmit(null);
-            }
-            
+
             if (Input.touchCount >= 1)
             {
                 var touchPos = Input.GetTouch(0).position;
 
+                // get the selected color from the color wheel
                 if (_colorWheelCollider.OverlapPoint(touchPos))
                 {
                     if (RectTransformUtility.ScreenPointToLocalPointInRectangle(_colorWheelTransform,

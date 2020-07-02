@@ -1,6 +1,10 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
 
+/// <summary>
+/// @author Philipp Bönsch
+/// handles the grabbing and position modifying of the planet
+/// </summary>
 public class GrabController : MonoBehaviour
 {
     [SerializeField] private Button primaryActionButton;
@@ -53,7 +57,7 @@ public class GrabController : MonoBehaviour
             _selectedPlanet = null;
         }
 
-        primaryActionButton.interactable = _selectedPlanet != null || _grabbing;
+        //primaryActionButton.interactable = _selectedPlanet != null || _grabbing;
         secondaryActionButton.interactable = _selectedPlanet != null || _grabbing;
     }
 }
