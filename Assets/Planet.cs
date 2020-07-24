@@ -27,11 +27,14 @@ public class Planet : MonoBehaviour
     public bool IsSelected { get; set; }
 
     public bool HasCollided { get; set; }
-    
+
+
     private const float InitialHeight = 0.001f;
+    private Vector3 _startPosition;
     private Vector3 _prevPosition;
     private float _prevMass;
     private float _prevRadius;
+    private float _prevSpeed;
     private Vector3 _prevInitialVelocity;
     private Color _prevColor;
     private bool _prevSelected;
@@ -59,14 +62,14 @@ public class Planet : MonoBehaviour
             _meshRenderer.material = highlightMaterial;
             _meshRenderer.material.SetColor(MainColor, color);
             _meshRenderer.material.SetColor(Albedo, color);
-            GetComponent<LineRenderer>().material.color = color;
+            GetComponent<LineRenderer>().material.color = new Color(color.r, color.g, color.b, 0.2f);
             _colorChanged = false;
         }
         else if (_colorChanged && !IsSelected)
         {
             _meshRenderer.material = defaultMaterial;
             _meshRenderer.material.SetColor(Albedo, color);
-            GetComponent<LineRenderer>().material.color = color;
+            GetComponent<LineRenderer>().material.color = new Color(color.r, color.g, color.b, 0.2f);
             _colorChanged = false;
         }
     }
@@ -126,4 +129,8 @@ public class Planet : MonoBehaviour
             IsSetup = true;
         }
     }
+
+    public void ResetPosition() => transform.position = _startPosition;
+
+    public void SaveStartPosition() => _startPosition = transform.position;
 }

@@ -15,14 +15,14 @@ public class PlacementController : MonoBehaviour
 
     [SerializeField] private GameObject planetPrefab;
     [SerializeField] private GameObject placeIndicator;
-    [SerializeField] private Button spawnButton;
+    [SerializeField] private ButtonLongPress primaryActionButton;
     private bool _showIndicator;
 
     private void Start()
     {
         _arRaycastManager = GetComponent<ARRaycastManager>();
         
-        spawnButton.onClick.AddListener(() =>
+        primaryActionButton.onClick.AddListener(() =>
         {
             // spawn planet when indicator visible
             if (ModeManager.Instance.CurrentMode == ModeManager.Mode.Place && _showIndicator)

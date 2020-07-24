@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 using UnityEngine.UI;
 
 /// <summary>
@@ -8,7 +9,7 @@ using UnityEngine.UI;
 public class ModeManager : MonoBehaviour
 {
     [SerializeField] private Image primaryActionImage;
-    [SerializeField] private Button primaryActionButton;
+    [SerializeField] private ButtonLongPress primaryActionButton;
     [SerializeField] private Button secondaryActionButton;
     [SerializeField] private Button modeButton;
     [SerializeField] private Image modeImage;
@@ -48,6 +49,9 @@ public class ModeManager : MonoBehaviour
 
     private void RotateMode()
     {
+        if (!modeButton.interactable) return;
+
+        primaryActionButton.interactable = true;
         CurrentMode = (int)CurrentMode + 1 > 2 ? 0 : CurrentMode + 1;
         primaryActionImage.sprite = primarySprites[(int)CurrentMode];
         modeImage.sprite = modeSprites[(int)CurrentMode];
@@ -65,5 +69,10 @@ public class ModeManager : MonoBehaviour
         primaryActionButton.gameObject.SetActive(show);
         secondaryActionButton.gameObject.SetActive(show);
         modeButton.gameObject.SetActive(show);
+    }
+
+    public void ChangePlayImage(PlanetManager.SimulationMode mode)
+    {
+        primaryActionImage.sprite = primarySprites[mode == PlanetManager.SimulationMode.Play ? 4 : 2];
     }
 }

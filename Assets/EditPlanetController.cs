@@ -21,10 +21,13 @@ public class EditPlanetController : MonoBehaviour
 
     [SerializeField] private Slider radiusSlider;
     [SerializeField] private Text radiusVal;
+    [SerializeField] private Slider speedSlider;
+    [SerializeField] private Text speedVal;
 
     private Color _prevColor;
     private float _prevRadius;
-    private Vector3 _prevVel;
+    private Vector3 _prevDirection;
+    private float _prevSpeed;
 
     private Texture2D _colorWheelTex;
     private CircleCollider2D _colorWheelCollider;
@@ -36,10 +39,15 @@ public class EditPlanetController : MonoBehaviour
     {
         _prevColor = SelectedPlanet.color;
         _prevRadius = SelectedPlanet.radius;
-        _prevVel = SelectedPlanet.initialVelocity;
-
-        radiusSlider.value = 0.5f;
+        _prevDirection = SelectedPlanet.initialVelocity.normalized;
+        _prevSpeed = SelectedPlanet.initialVelocity.magnitude;
+        
+        radiusSlider.value = _prevRadius;
         radiusVal.text = $"{_prevRadius}";
+        speedSlider.value = _prevSpeed;
+        speedVal.text = $"{_prevSpeed}";
+
+
         colorImage.color = _prevColor;
         _colorWheelTex = colorWheel.GetComponent<Image>().sprite.texture;
         _colorWheelCollider = colorWheel.GetComponent<CircleCollider2D>();
@@ -68,7 +76,7 @@ public class EditPlanetController : MonoBehaviour
             gameObject.SetActive(false);
             SelectedPlanet.color = _prevColor;
             SelectedPlanet.radius = _prevRadius;
-            SelectedPlanet.initialVelocity = _prevVel;
+            SelectedPlanet.initialVelocity = _prevDirection * _prevSpeed;
             SelectedPlanet = null;
         });
 
@@ -85,6 +93,13 @@ public class EditPlanetController : MonoBehaviour
             radiusVal.text = $"{roundedVal}";
             SelectedPlanet.radius = roundedVal;
         });
+        
+        speedSlider.onValueChanged.AddListener(val =>
+        {
+            var roundedVal = (int) (val * 100) / 100.0f;
+            speedVal.text = $"{roundedVal}";
+            SelectedPlanet.initialVelocity = SelectedPlanet.initialVelocity.normalized * roundedVal;
+        });
     }
 
     private void Update()
@@ -93,7 +108,7 @@ public class EditPlanetController : MonoBehaviour
         {
             if (Input.GetKey(KeyCode.Escape))
             {
-                SelectedPlanet.initialVelocity = _prevVel;
+                SelectedPlanet.initialVelocity = _prevDirection * _prevSpeed;
                 velEditDoneButton.OnSubmit(null);
             }
 
@@ -103,7 +118,10 @@ public class EditPlanetController : MonoBehaviour
             ray = new Ray(ray.origin + ray.direction * 1000f, -ray.direction);
 
             if (Physics.Raycast(ray, out var hit, 1000f) && hit.collider.gameObject.CompareTag("OuterSphere"))
-                SelectedPlanet.initialVelocity = (hit.point - SelectedPlanet.transform.position).normalized * 0.1f;
+            {
+                var direction = (hit.point - SelectedPlanet.transform.position).normalized;
+                SelectedPlanet.initialVelocity = direction * SelectedPlanet.initialVelocity.magnitude;
+            }
         }
         else
         {

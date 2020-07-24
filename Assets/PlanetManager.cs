@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 /// <summary>
@@ -13,7 +14,7 @@ public class PlanetManager : MonoBehaviour
     public float gravity = 0.001f;
     public static PlanetManager Instance { get; private set; }
 
-    [SerializeField] private Button primaryActionButton;
+    [SerializeField] private ButtonLongPress primaryActionButton;
     [SerializeField] private Button modeButton;
     [SerializeField] [Range(500, 10000)] private int range;
     [SerializeField] private GameObject collisionPrefab;
@@ -22,12 +23,19 @@ public class PlanetManager : MonoBehaviour
     private readonly List<Planet> _planets = new List<Planet>();
     private readonly List<GameObject> _collisionSpheres = new List<GameObject>();
 
+    public enum SimulationMode
+    {
+        Play,
+        Pause,
+        Stop
+    }
+    
     private int _index;
     private List<Vector3>[] _trajectory;
     private Vector3[] _velocities;
     private bool[] _collidedPlanets;
     private bool _forceUpdateTrajectory;
-    private bool _isSimulating;
+    private SimulationMode _simulationMode = SimulationMode.Stop;
     private int _prevRange;
     private float _prevGravity;
 
@@ -42,19 +50,45 @@ public class PlanetManager : MonoBehaviour
     private void Start()
     {
         if (!_isMobile) return;
+        
+        primaryActionButton.onClick.AddListener(PrimaryButtonClick);
+        primaryActionButton.onLongPress.AddListener(PrimaryButtonLongPress);
+    }
 
-        primaryActionButton.onClick.AddListener(() =>
+    private void PrimaryButtonLongPress()
+    {
+        _simulationMode = SimulationMode.Stop;
+        _planets.ForEach(p => p.ResetPosition());
+        _index = 0;
+        _forceUpdateTrajectory = true;
+    }
+
+    private void PrimaryButtonClick()
+    {
+        if (_isMobile && ModeManager.Instance.CurrentMode != ModeManager.Mode.Simulate) return;
+        switch (_simulationMode)
         {
-            if (ModeManager.Instance.CurrentMode != ModeManager.Mode.Simulate) return;
-            _isSimulating = !_isSimulating;
-        });
+            case SimulationMode.Stop:
+                _planets.ForEach(p => p.SaveStartPosition());
+                _simulationMode = SimulationMode.Play;
+                break;
+            case SimulationMode.Play:
+                _simulationMode = SimulationMode.Pause;
+                break;
+            case SimulationMode.Pause:
+                _simulationMode = SimulationMode.Play;
+                break;
+        }
+        ModeManager.Instance.ChangePlayImage(_simulationMode);
+            
+        modeButton.interactable = _simulationMode == SimulationMode.Stop;
     }
 
     private void Update() => CheckPropertiesChanged();
 
     private void FixedUpdate()
     {
-        if (!_isSimulating)
+        if (_simulationMode == SimulationMode.Stop)
         {
             if (UpdateTrajectoryNeeded())
                 RedrawTrajectory();
@@ -62,9 +96,9 @@ public class PlanetManager : MonoBehaviour
             if (_isMobile)
                 modeButton.interactable = _planets.All(p => p.IsSetup);
             else if (Input.GetKeyDown(KeyCode.Space))
-                _isSimulating = !_isSimulating;
+                PrimaryButtonClick();
         }
-        else
+        else if (_simulationMode == SimulationMode.Play)
         {
             // loop over every planet and move it along its trajectory
             for (var pIndex = 0; pIndex < _planets.Count; pIndex++)
@@ -75,7 +109,7 @@ public class PlanetManager : MonoBehaviour
                 // set the new planet position
                 _planets[pIndex].transform.position = _trajectory[pIndex][_index];
                 UpdatePlanetTrajectory(pIndex);
-
+                
                 var collidedPlanets = _planets.Select(p => p.HasCollided).ToArray();
                 var collidingPlanet = CheckForCollision(_index, pIndex, collidedPlanets);
                 
@@ -191,7 +225,7 @@ public class PlanetManager : MonoBehaviour
             lineRenderer.SetPositions(_trajectory[i].ToArray());
         }
     }
-    
+
     /// <summary>
     /// updates the velocity and upcoming positions of a planet
     /// </summary>

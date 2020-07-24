@@ -7,7 +7,8 @@ using UnityEngine.UI;
 /// </summary>
 public class GrabController : MonoBehaviour
 {
-    [SerializeField] private Button primaryActionButton;
+    [SerializeField] private ButtonLongPress primaryActionButton;
+    [SerializeField] private Button modeButton;
     [SerializeField] private Button secondaryActionButton;
     [SerializeField] private GameObject editPanel;
     private GameObject _selectedPlanet;
@@ -57,7 +58,8 @@ public class GrabController : MonoBehaviour
             _selectedPlanet = null;
         }
 
-        //primaryActionButton.interactable = _selectedPlanet != null || _grabbing;
+        modeButton.interactable = !_grabbing;
+        primaryActionButton.interactable = _selectedPlanet != null;
         secondaryActionButton.interactable = _selectedPlanet != null || _grabbing;
     }
 }
